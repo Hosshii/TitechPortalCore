@@ -21,13 +21,6 @@ public struct TitechPortalLoginScrapingTask {
             .shared
             .dataTask(with: URL(string:"https://portal.nap.gsic.titech.ac.jp/GetAccess/Login?Template=userpass_key&AUTHMETHOD=UserPassword")!)
             { data, res, err in
-                //            print(res ?? "no res")
-//                print(String(data: data!, encoding: .utf8) ?? "no data")
-                
-//                HTMLInputParser.parse(data!)
-//                    .map {data in
-//                        print(data)
-//                    }
                 let parsed = HTMLInputParser.parse(data!)
                 let inputed = parsed.map { data -> HTMLInput in
                     if data.name == USER_NAME_IDE {
@@ -39,11 +32,6 @@ public struct TitechPortalLoginScrapingTask {
                         return HTMLInput(name: data.name, value: data.value, type: data.type)
                     }
                 }
-//                print("================")
-                
-//                inputed.map{data in
-//                    print(data)
-//                }
                 
                 var urlRequest = URLRequest(url: URL(string: "https://portal.nap.gsic.titech.ac.jp/GetAccess/Login")!)
                 urlRequest.httpMethod = "POST"
@@ -54,18 +42,15 @@ public struct TitechPortalLoginScrapingTask {
                 .joined(separator: "&")
                 .data(using: .utf8)
                 
-                //                print(String(data: urlRequest.httpBody!, encoding: .utf8))
-                
-//                print("============")
-                
                 let task = URLSession
                     .shared
                     .dataTask(with: urlRequest) { data, res, err in
-//                        print(String(data: data!, encoding: .utf8) ?? "no data" )
-                        //                        print(err)
-                        //                        print(res)
-                        let dataString = String(data: data!, encoding: .utf8)!
+                        guard let dataString = String(data: data!, encoding: .utf8) else {
+                            print("parse password login request occurs error")
+                            return
+                        }
                         guard let matrix = dataString.matches("([A-J]),(\\d+)") else {
+                            print("read matrix in html error")
                             return
                         }
                         
@@ -73,27 +58,82 @@ public struct TitechPortalLoginScrapingTask {
                             return
                         }
                         
+                        // matrixコードを主録するため
                         let m = Matrix()
+                        
                         let parsed = HTMLInputParser.parse(data!)
-                        let inputed = parsed.map{ data -> HTMLInput in
+                        
+                        // matrixコードを入力したHTMLInputを返す。最後にcompactMapでnilをのぞいているので[HTMLInput]型
+                        let inputed = parsed.map{ data -> HTMLInput? in
                             if data.name == MATRIX_1_IDE {
-                                let row = Int(matrix[0][1])!
-//                                let column = first(matrix[0][0].utf8)!
-                                let column = matrix[0][0].unicodeScalars.first!.value - "A".unicodeScalars.first!.value
+                                guard let row = Int(matrix[0][1]) else {
+                                    print("read row error")
+                                    return nil
+                                }
+                                
+                                // アルファベットを数字に変えてるだけ
+                                guard let column = (matrix[0][0]
+                                                        .unicodeScalars
+                                                        .first
+                                                        .flatMap{ a in
+                                                            "A"
+                                                                .unicodeScalars
+                                                                .first
+                                                                .map{b in
+                                                                    a.value - b.value
+                                                                }
+                                                        }) else {
+                                    print("read column error")
+                                    return nil
+                                }
                                 return HTMLInput(name: data.name, value: String(m.MATRIX[row][Int(column)]), type: data.type)
                             }else if data.name == MATRIX_2_IDE {
-                                let row = Int(matrix[1][1])!
-//                                let column = first(matrix[0][0].utf8)!
-                                let column = matrix[1][0].unicodeScalars.first!.value - "A".unicodeScalars.first!.value
+                                guard let row = Int(matrix[1][1]) else {
+                                    print("read row error")
+                                    return nil
+                                }
+                                // アルファベットを数字に変えてるだけ
+                                guard let column = (matrix[1][0]
+                                                        .unicodeScalars
+                                                        .first
+                                                        .flatMap{ a in
+                                                            "A"
+                                                                .unicodeScalars
+                                                                .first
+                                                                .map{b in
+                                                                    a.value - b.value
+                                                                }
+                                                        }) else {
+                                    print("read column error")
+                                    return nil
+                                }
                                 return HTMLInput(name: data.name, value: String(m.MATRIX[row][Int(column)]), type: data.type)
                             }else if data.name == MATRIX_3_IDE {
-                                let row = Int(matrix[2][1])!
-//                                let column = first(matrix[0][0].utf8)!
-                                let column = matrix[2][0].unicodeScalars.first!.value - "A".unicodeScalars.first!.value
+                                guard let row = Int(matrix[2][1]) else {
+                                    print("read row error")
+                                    return nil
+                                }
+                                // アルファベットを数字に変えてるだけ
+                                guard let column = (matrix[2][0]
+                                                        .unicodeScalars
+                                                        .first
+                                                        .flatMap{ a in
+                                                            "A"
+                                                                .unicodeScalars
+                                                                .first
+                                                                .map{b in
+                                                                    a.value - b.value
+                                                                }
+                                                        }) else {
+                                    print("read column error")
+                                    return nil
+                                }
                                 return HTMLInput(name: data.name, value: String(m.MATRIX[row][Int(column)]), type: data.type)
                             }
                             return HTMLInput(name: data.name, value: data.value, type: data.type)
                         }
+                        .compactMap{$0}
+                        
                         
                         var urlRequest = URLRequest(url: URL(string: "https://portal.nap.gsic.titech.ac.jp/GetAccess/Login")!)
                         urlRequest.httpMethod = "POST"
@@ -110,7 +150,6 @@ public struct TitechPortalLoginScrapingTask {
                                 print(String(data: data!, encoding: .utf8) ?? "no data" )
                             }
                             .resume()
-                        
                     }
                     .resume()
             }
