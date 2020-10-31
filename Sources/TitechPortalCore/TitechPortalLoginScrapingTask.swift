@@ -24,10 +24,10 @@ public struct TitechPortalLoginScrapingTask {
                 let parsed = HTMLInputParser.parse(data!)
                 let inputed = parsed.map { data -> HTMLInput in
                     if data.name == USER_NAME_IDE {
-                        return HTMLInput(name: data.name, value: userName, type: data.type)
+                        return HTMLInput(name: data.name, value: userName.urlEncoded, type: data.type)
                     }
                     else if data.name == USER_PASSWORD_IDE {
-                        return HTMLInput(name: data.name, value: password, type: data.type)
+                        return HTMLInput(name: data.name, value: password.urlEncoded, type: data.type)
                     }else {
                         return HTMLInput(name: data.name, value: data.value, type: data.type)
                     }
@@ -37,7 +37,7 @@ public struct TitechPortalLoginScrapingTask {
                 urlRequest.httpMethod = "POST"
                 urlRequest.addValue("https://portal.nap.gsic.titech.ac.jp/GetAccess/Login", forHTTPHeaderField: "Referer")
                 urlRequest.httpBody = inputed.map{data in
-                    data.encode()
+                    data.join()
                 }
                 .joined(separator: "&")
                 .data(using: .utf8)
@@ -58,79 +58,46 @@ public struct TitechPortalLoginScrapingTask {
                             return
                         }
                         
-                        // matrixコードを主録するため
-//                        let m = Matrix()
-                        
                         let parsed = HTMLInputParser.parse(data!)
                         
                         // matrixコードを入力したHTMLInputを返す。最後にcompactMapでnilをのぞいているので[HTMLInput]型
                         let inputed = parsed.map{ data -> HTMLInput? in
+                            var row: String
+                            var column: String
                             if data.name == MATRIX_1_IDE {
-                                guard let row = Int(selected_matrix[0][1]) else {
-                                    print("read row error")
-                                    return nil
-                                }
-                                
-                                // アルファベットを数字に変えてるだけ
-                                guard let column = (selected_matrix[0][0]
-                                                        .unicodeScalars
-                                                        .first
-                                                        .flatMap{ a in
-                                                            "A"
-                                                                .unicodeScalars
-                                                                .first
-                                                                .map{b in
-                                                                    a.value - b.value
-                                                                }
-                                                        }) else {
-                                    print("read column error")
-                                    return nil
-                                }
-                                return HTMLInput(name: data.name, value: String(matrix[row][Int(column)]), type: data.type)
+                                row = selected_matrix[0][1]
+                                column = selected_matrix[0][0]
                             }else if data.name == MATRIX_2_IDE {
-                                guard let row = Int(selected_matrix[1][1]) else {
-                                    print("read row error")
-                                    return nil
-                                }
-                                // アルファベットを数字に変えてるだけ
-                                guard let column = (selected_matrix[1][0]
-                                                        .unicodeScalars
-                                                        .first
-                                                        .flatMap{ a in
-                                                            "A"
-                                                                .unicodeScalars
-                                                                .first
-                                                                .map{b in
-                                                                    a.value - b.value
-                                                                }
-                                                        }) else {
-                                    print("read column error")
-                                    return nil
-                                }
-                                return HTMLInput(name: data.name, value: String(matrix[row][Int(column)]), type: data.type)
+                                row = selected_matrix[1][1]
+                                column = selected_matrix[1][0]
                             }else if data.name == MATRIX_3_IDE {
-                                guard let row = Int(selected_matrix[2][1]) else {
-                                    print("read row error")
-                                    return nil
-                                }
-                                // アルファベットを数字に変えてるだけ
-                                guard let column = (selected_matrix[2][0]
-                                                        .unicodeScalars
-                                                        .first
-                                                        .flatMap{ a in
-                                                            "A"
-                                                                .unicodeScalars
-                                                                .first
-                                                                .map{b in
-                                                                    a.value - b.value
-                                                                }
-                                                        }) else {
-                                    print("read column error")
-                                    return nil
-                                }
-                                return HTMLInput(name: data.name, value: String(matrix[row][Int(column)]), type: data.type)
+                                row = selected_matrix[2][1]
+                                column = selected_matrix[2][0]
+                                
+                            }else {
+                                return HTMLInput(name: data.name, value: data.value, type: data.type)
                             }
-                            return HTMLInput(name: data.name, value: data.value, type: data.type)
+                            guard let rowNum = Int(row) else {
+                                print("read row error")
+                                return nil
+                            }
+                            // アルファベットを数字に変えてるだけ
+                            guard let columnNum = (column
+                                                    .unicodeScalars
+                                                    .first
+                                                    .flatMap{ a in
+                                                        "A"
+                                                            .unicodeScalars
+                                                            .first
+                                                            .map{b in
+                                                                a.value - b.value
+                                                            }
+                                                    }) else {
+                                print("read column error")
+                                return nil
+                            }
+                            // rowNumは1始まりになってる(matrix[[0] は []になってる)
+                            return HTMLInput(name: data.name, value: String(matrix[rowNum][Int(columnNum)]), type: data.type)
                         }
                         .compactMap{$0}
                         
@@ -139,7 +106,7 @@ public struct TitechPortalLoginScrapingTask {
                         urlRequest.httpMethod = "POST"
                         urlRequest.addValue("https://portal.nap.gsic.titech.ac.jp/GetAccess/Login", forHTTPHeaderField: "Referer")
                         urlRequest.httpBody = inputed.map{data in
-                            data.encode()
+                            data.join()
                         }
                         .joined(separator: "&")
                         .data(using: .utf8)
