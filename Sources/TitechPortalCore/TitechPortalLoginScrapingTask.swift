@@ -15,7 +15,7 @@ let MATRIX_3_IDE = "message5"
 
 
 public struct TitechPortalLoginScrapingTask {
-    public static func login(){
+    public static func login(userName: String, password: String, matrix: [[String]]) {
         print("login")
         URLSession
             .shared
@@ -24,10 +24,10 @@ public struct TitechPortalLoginScrapingTask {
                 let parsed = HTMLInputParser.parse(data!)
                 let inputed = parsed.map { data -> HTMLInput in
                     if data.name == USER_NAME_IDE {
-                        return HTMLInput(name: data.name, value: USER_NAME, type: data.type)
+                        return HTMLInput(name: data.name, value: userName, type: data.type)
                     }
                     else if data.name == USER_PASSWORD_IDE {
-                        return HTMLInput(name: data.name, value: PASSWORD, type: data.type)
+                        return HTMLInput(name: data.name, value: password, type: data.type)
                     }else {
                         return HTMLInput(name: data.name, value: data.value, type: data.type)
                     }
@@ -49,30 +49,30 @@ public struct TitechPortalLoginScrapingTask {
                             print("parse password login request occurs error")
                             return
                         }
-                        guard let matrix = dataString.matches("([A-J]),(\\d+)") else {
+                        guard let selected_matrix = dataString.matches("([A-J]),(\\d+)") else {
                             print("read matrix in html error")
                             return
                         }
                         
-                        if matrix.count < 3 {
+                        if selected_matrix.count < 3 {
                             return
                         }
                         
                         // matrixコードを主録するため
-                        let m = Matrix()
+//                        let m = Matrix()
                         
                         let parsed = HTMLInputParser.parse(data!)
                         
                         // matrixコードを入力したHTMLInputを返す。最後にcompactMapでnilをのぞいているので[HTMLInput]型
                         let inputed = parsed.map{ data -> HTMLInput? in
                             if data.name == MATRIX_1_IDE {
-                                guard let row = Int(matrix[0][1]) else {
+                                guard let row = Int(selected_matrix[0][1]) else {
                                     print("read row error")
                                     return nil
                                 }
                                 
                                 // アルファベットを数字に変えてるだけ
-                                guard let column = (matrix[0][0]
+                                guard let column = (selected_matrix[0][0]
                                                         .unicodeScalars
                                                         .first
                                                         .flatMap{ a in
@@ -86,14 +86,14 @@ public struct TitechPortalLoginScrapingTask {
                                     print("read column error")
                                     return nil
                                 }
-                                return HTMLInput(name: data.name, value: String(m.MATRIX[row][Int(column)]), type: data.type)
+                                return HTMLInput(name: data.name, value: String(matrix[row][Int(column)]), type: data.type)
                             }else if data.name == MATRIX_2_IDE {
-                                guard let row = Int(matrix[1][1]) else {
+                                guard let row = Int(selected_matrix[1][1]) else {
                                     print("read row error")
                                     return nil
                                 }
                                 // アルファベットを数字に変えてるだけ
-                                guard let column = (matrix[1][0]
+                                guard let column = (selected_matrix[1][0]
                                                         .unicodeScalars
                                                         .first
                                                         .flatMap{ a in
@@ -107,14 +107,14 @@ public struct TitechPortalLoginScrapingTask {
                                     print("read column error")
                                     return nil
                                 }
-                                return HTMLInput(name: data.name, value: String(m.MATRIX[row][Int(column)]), type: data.type)
+                                return HTMLInput(name: data.name, value: String(matrix[row][Int(column)]), type: data.type)
                             }else if data.name == MATRIX_3_IDE {
-                                guard let row = Int(matrix[2][1]) else {
+                                guard let row = Int(selected_matrix[2][1]) else {
                                     print("read row error")
                                     return nil
                                 }
                                 // アルファベットを数字に変えてるだけ
-                                guard let column = (matrix[2][0]
+                                guard let column = (selected_matrix[2][0]
                                                         .unicodeScalars
                                                         .first
                                                         .flatMap{ a in
@@ -128,7 +128,7 @@ public struct TitechPortalLoginScrapingTask {
                                     print("read column error")
                                     return nil
                                 }
-                                return HTMLInput(name: data.name, value: String(m.MATRIX[row][Int(column)]), type: data.type)
+                                return HTMLInput(name: data.name, value: String(matrix[row][Int(column)]), type: data.type)
                             }
                             return HTMLInput(name: data.name, value: data.value, type: data.type)
                         }
