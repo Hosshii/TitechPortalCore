@@ -27,7 +27,7 @@ struct HTMLInput {
     let type: HTMLInputType
     
     func join() -> String {
-        return self.name + "=" + self.value
+        return self.name.urlEncoded + "=" + self.value.urlEncoded
     }
 }
 

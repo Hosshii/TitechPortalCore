@@ -41,10 +41,10 @@ public struct TitechPortalLoginScrapingTask {
                 let parsed = HTMLInputParser.parse(data)
                 let inputed = parsed.map { data -> HTMLInput in
                     if data.name == USER_NAME_IDE {
-                        return HTMLInput(name: data.name, value: userName.urlEncoded, type: data.type)
+                        return HTMLInput(name: data.name, value: userName, type: data.type)
                     }
                     else if data.name == USER_PASSWORD_IDE {
-                        return HTMLInput(name: data.name, value: password.urlEncoded, type: data.type)
+                        return HTMLInput(name: data.name, value: password, type: data.type)
                     }else {
                         return HTMLInput(name: data.name, value: data.value, type: data.type)
                     }
