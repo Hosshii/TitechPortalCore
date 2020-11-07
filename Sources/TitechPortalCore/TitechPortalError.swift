@@ -8,7 +8,7 @@
 import Foundation
 
 public enum TitechPortalError:Error {
-    case networkError
+    case networkError(Error)
     case passwordPageScrapingError
     case passwordAuthError
     case matrixPageScrapingError

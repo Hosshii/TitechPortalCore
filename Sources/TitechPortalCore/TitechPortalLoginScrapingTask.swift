@@ -20,10 +20,15 @@ public struct TitechPortalLoginScrapingTask {
         URLSession
             .shared
             .dataTask(with: URL(string:"https://portal.nap.gsic.titech.ac.jp/GetAccess/Login?Template=userpass_key&AUTHMETHOD=UserPassword")!)
-            { _data, _res, err in
+            { _data, _res, _err in
+                if let err = _err {
+                    complethionHandler(.failure(TitechPortalError.networkError(err)))
+                    return
+                }
+                
                 guard let data = _data else {
                     print("response data is nil")
-                    complethionHandler(.failure(TitechPortalError.passwordPageScrapingError))
+                    complethionHandler(.failure(TitechPortalError.networkError("response data is nil" as! Error)))
                     return
                 }
                 
@@ -48,6 +53,8 @@ public struct TitechPortalLoginScrapingTask {
                 var urlRequest = URLRequest(url: URL(string: "https://portal.nap.gsic.titech.ac.jp/GetAccess/Login")!)
                 urlRequest.httpMethod = "POST"
                 urlRequest.addValue("https://portal.nap.gsic.titech.ac.jp/GetAccess/Login", forHTTPHeaderField: "Referer")
+//                urlRequest.addValue("Mozilla/5.0 (iPhone; CPU iPhone OS 14_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.0 Mobile/15E148 Safari/604.1", forHTTPHeaderField: "User-Agent")
+                urlRequest.addValue("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_6) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.0 Safari/605.1.15", forHTTPHeaderField: "User-Agent")
                 urlRequest.httpBody = inputed.map{data in
                     data.join()
                 }
@@ -57,11 +64,9 @@ public struct TitechPortalLoginScrapingTask {
                 guard let res = _res else {
                     return
                 }
-                var cookieURL: URL?
                 
                 if let res = res as? HTTPURLResponse {
                     if let fields = res.allHeaderFields as? [String: String], let url = res.url {
-                        cookieURL = url
                         for cookie in HTTPCookie.cookies(withResponseHeaderFields: fields, for: url) {
                             HTTPCookieStorage.shared.setCookie(cookie)
                         }
@@ -70,10 +75,15 @@ public struct TitechPortalLoginScrapingTask {
                 
                 let task = URLSession
                     .shared
-                    .dataTask(with: urlRequest) { _data, res, err in
+                    .dataTask(with: urlRequest) { _data, res, _err in
+                        if let err = _err {
+                            complethionHandler(.failure(TitechPortalError.networkError(err)))
+                            return
+                        }
+                        
                         guard let data = _data else {
                             print("response data is nil")
-                            complethionHandler(.failure(TitechPortalError.matrixPageScrapingError))
+                            complethionHandler(.failure(TitechPortalError.networkError("response data is nil" as! Error)))
                             return
                         }
                         
@@ -146,6 +156,8 @@ public struct TitechPortalLoginScrapingTask {
                         var urlRequest = URLRequest(url: URL(string: "https://portal.nap.gsic.titech.ac.jp/GetAccess/Login")!)
                         urlRequest.httpMethod = "POST"
                         urlRequest.addValue("https://portal.nap.gsic.titech.ac.jp/GetAccess/Login", forHTTPHeaderField: "Referer")
+//                        urlRequest.addValue("Mozilla/5.0 (iPhone; CPU iPhone OS 14_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.0 Mobile/15E148 Safari/604.1", forHTTPHeaderField: "User-Agent")
+                        urlRequest.addValue("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_6) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.0 Safari/605.1.15", forHTTPHeaderField: "User-Agent")
                         urlRequest.httpBody = inputed.map{data in
                             data.join()
                         }
@@ -154,10 +166,15 @@ public struct TitechPortalLoginScrapingTask {
                         
                         let task = URLSession
                             .shared
-                            .dataTask(with: urlRequest) { _data, res, err in
+                            .dataTask(with: urlRequest) { _data, res, _err in
+                                if let err = _err {
+                                    complethionHandler(.failure(TitechPortalError.networkError(err)))
+                                    return
+                                }
+
                                 guard let data = _data else {
                                     print("response data is nil")
-                                    complethionHandler(.failure(TitechPortalError.loggedinPageError))
+                                    complethionHandler(.failure(TitechPortalError.networkError("response data is nil" as! Error)))
                                     return
                                 }
                                 if TitechPortalErrorHandling.JudgePage(data: data) != TitechPortalErrorHandling.PageType.loggedin {
@@ -167,7 +184,7 @@ public struct TitechPortalLoginScrapingTask {
                                 }
 
                                 print("login success")
-                                if let cookies = HTTPCookieStorage.shared.cookies(for: cookieURL!) {
+                                if let cookies = HTTPCookieStorage.shared.cookies {
                                 
                                 complethionHandler(.success(cookies))
                                 
