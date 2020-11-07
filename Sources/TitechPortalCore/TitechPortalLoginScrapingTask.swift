@@ -20,8 +20,18 @@ public struct TitechPortalLoginScrapingTask {
         URLSession
             .shared
             .dataTask(with: URL(string:"https://portal.nap.gsic.titech.ac.jp/GetAccess/Login?Template=userpass_key&AUTHMETHOD=UserPassword")!)
-            { data, res, err in
-                let parsed = HTMLInputParser.parse(data!)
+            { _data, res, err in
+                guard let data = _data else {
+                    print("response data is nil")
+                    return
+                }
+                
+                if TitechPortalErrorHandling.JudgePage(data: data) != TitechPortalErrorHandling.PageType.password {
+                    print("Cannot scraping password authenticate page")
+                    return
+                }
+                
+                let parsed = HTMLInputParser.parse(data)
                 let inputed = parsed.map { data -> HTMLInput in
                     if data.name == USER_NAME_IDE {
                         return HTMLInput(name: data.name, value: userName.urlEncoded, type: data.type)
@@ -44,8 +54,18 @@ public struct TitechPortalLoginScrapingTask {
                 
                 let task = URLSession
                     .shared
-                    .dataTask(with: urlRequest) { data, res, err in
-                        guard let dataString = String(data: data!, encoding: .utf8) else {
+                    .dataTask(with: urlRequest) { _data, res, err in
+                        guard let data = _data else {
+                            print("response data is nil")
+                            return
+                        }
+                        
+                        if TitechPortalErrorHandling.JudgePage(data: data) != TitechPortalErrorHandling.PageType.matrix {
+                            print("password authentication failed")
+                            return
+                        }
+                        
+                        guard let dataString = String(data: data, encoding: .utf8) else {
                             print("parse password login request occurs error")
                             return
                         }
@@ -58,7 +78,7 @@ public struct TitechPortalLoginScrapingTask {
                             return
                         }
                         
-                        let parsed = HTMLInputParser.parse(data!)
+                        let parsed = HTMLInputParser.parse(data)
                         
                         // matrixコードを入力したHTMLInputを返す。最後にcompactMapでnilをのぞいているので[HTMLInput]型
                         let inputed = parsed.map{ data -> HTMLInput? in
@@ -113,8 +133,18 @@ public struct TitechPortalLoginScrapingTask {
                         
                         let task = URLSession
                             .shared
-                            .dataTask(with: urlRequest) { data, res, err in
-                                print(String(data: data!, encoding: .utf8) ?? "no data" )
+                            .dataTask(with: urlRequest) { _data, res, err in
+                                guard let data = _data else {
+                                    print("response data is nil")
+                                    return
+                                }
+                                if TitechPortalErrorHandling.JudgePage(data: data) != TitechPortalErrorHandling.PageType.loggedin {
+                                    print("matrix authentication failed")
+                                    return
+                                }
+
+                                print("login success")
+                                print(String(data: data, encoding: .utf8) ?? "no data" )
                             }
                             .resume()
                     }
