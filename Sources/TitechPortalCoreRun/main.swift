@@ -8,7 +8,7 @@
 import Foundation
 import TitechPortalCore
 
-let s = Auth()
+let s = Account()
 TitechPortalLoginScrapingTask.login(userName: s.userName, password: s.password, matrix: s.MATRIX)
 
 dispatchMain()

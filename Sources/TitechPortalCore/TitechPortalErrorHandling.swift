@@ -23,11 +23,11 @@ public struct TitechPortalErrorHandling {
         guard let dataString = String(data: data, encoding: .utf8) else {
             return PageType.error
         }
-        if dataString.contains(PASSWORD_PAGE_KEYWORD[0]) && dataString.contains(PASSWORD_PAGE_KEYWORD[1]) {
+        if PASSWORD_PAGE_KEYWORD.allSatisfy({dataString.contains($0)}) {
             return PageType.password
-        }else if dataString.contains(MATRIX_PAGE_KEYWORD[0]) && dataString.contains(MATRIX_PAGE_KEYWORD[1]) {
+        }else if MATRIX_PAGE_KEYWORD.allSatisfy({dataString.contains($0)}) {
             return PageType.matrix
-        }else if dataString.contains(LOGGEDIN_PAGE_KEYWORD[0]) && dataString.contains(LOGGEDIN_PAGE_KEYWORD[1]) {
+        }else if LOGGEDIN_PAGE_KEYWORD.allSatisfy({dataString.contains($0)}) {
             return PageType.loggedin
         }
         

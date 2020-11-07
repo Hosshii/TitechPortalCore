@@ -8,7 +8,7 @@
 import Foundation
 
 
-public struct Auth {
+public struct Account {
     var MATRIX:[[String]] = [[]]
     var userName: String
     var password: String
