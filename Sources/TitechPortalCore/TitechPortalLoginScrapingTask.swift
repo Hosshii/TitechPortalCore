@@ -15,19 +15,21 @@ let MATRIX_3_IDE = "message5"
 
 
 public struct TitechPortalLoginScrapingTask {
-    public static func login(userName: String, password: String, matrix: [[String]]) {
+    public static func login(userName: String, password: String, matrix: [[String]], complethionHandler: @escaping (Result<[HTTPCookie],TitechPortalError>) -> Void) {
         print("login")
         URLSession
             .shared
             .dataTask(with: URL(string:"https://portal.nap.gsic.titech.ac.jp/GetAccess/Login?Template=userpass_key&AUTHMETHOD=UserPassword")!)
-            { _data, res, err in
+            { _data, _res, err in
                 guard let data = _data else {
                     print("response data is nil")
+                    complethionHandler(.failure(TitechPortalError.passwordPageScrapingError))
                     return
                 }
                 
                 if TitechPortalErrorHandling.JudgePage(data: data) != TitechPortalErrorHandling.PageType.password {
                     print("Cannot scraping password authenticate page")
+                    complethionHandler(.failure(TitechPortalError.passwordPageScrapingError))
                     return
                 }
                 
@@ -52,29 +54,48 @@ public struct TitechPortalLoginScrapingTask {
                 .joined(separator: "&")
                 .data(using: .utf8)
                 
+                guard let res = _res else {
+                    return
+                }
+                var cookieURL: URL?
+                
+                if let res = res as? HTTPURLResponse {
+                    if let fields = res.allHeaderFields as? [String: String], let url = res.url {
+                        cookieURL = url
+                        for cookie in HTTPCookie.cookies(withResponseHeaderFields: fields, for: url) {
+                            HTTPCookieStorage.shared.setCookie(cookie)
+                        }
+                    }
+                }
+                
                 let task = URLSession
                     .shared
                     .dataTask(with: urlRequest) { _data, res, err in
                         guard let data = _data else {
                             print("response data is nil")
+                            complethionHandler(.failure(TitechPortalError.matrixPageScrapingError))
                             return
                         }
                         
                         if TitechPortalErrorHandling.JudgePage(data: data) != TitechPortalErrorHandling.PageType.matrix {
                             print("password authentication failed")
+                            complethionHandler(.failure(TitechPortalError.passwordAuthError))
                             return
                         }
                         
                         guard let dataString = String(data: data, encoding: .utf8) else {
                             print("parse password login request occurs error")
+                            complethionHandler(.failure(TitechPortalError.matrixPageScrapingError))
                             return
                         }
                         guard let selected_matrix = dataString.matches("([A-J]),(\\d+)") else {
                             print("read matrix in html error")
+                            complethionHandler(.failure(TitechPortalError.matrixPageScrapingError))
                             return
                         }
                         
                         if selected_matrix.count < 3 {
+                            complethionHandler(.failure(TitechPortalError.matrixPageScrapingError))
                             return
                         }
                         
@@ -136,15 +157,21 @@ public struct TitechPortalLoginScrapingTask {
                             .dataTask(with: urlRequest) { _data, res, err in
                                 guard let data = _data else {
                                     print("response data is nil")
+                                    complethionHandler(.failure(TitechPortalError.loggedinPageError))
                                     return
                                 }
                                 if TitechPortalErrorHandling.JudgePage(data: data) != TitechPortalErrorHandling.PageType.loggedin {
                                     print("matrix authentication failed")
+                                    complethionHandler(.failure(TitechPortalError.matrixAuthError))
                                     return
                                 }
 
                                 print("login success")
-                                print(String(data: data, encoding: .utf8) ?? "no data" )
+                                if let cookies = HTTPCookieStorage.shared.cookies(for: cookieURL!) {
+                                
+                                complethionHandler(.success(cookies))
+                                
+                            }
                             }
                             .resume()
                     }

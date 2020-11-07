@@ -9,6 +9,14 @@ import Foundation
 import TitechPortalCore
 
 let s = Account()
-TitechPortalLoginScrapingTask.login(userName: s.userName, password: s.password, matrix: s.MATRIX)
+
+TitechPortalLoginScrapingTask.login(userName: s.userName, password: s.password, matrix: s.MATRIX) {result in
+    switch result {
+    case .success(let cookies):
+        print(cookies)
+    case .failure(let err):
+        print(err)
+    }
+}
 
 dispatchMain()
