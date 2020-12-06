@@ -12,19 +12,18 @@ public struct Account {
     var MATRIX:[[String]] = [[]]
     var userName: String
     var password: String
+}
+
+func makeAccount()->Account{
+    let userName = readLine()!
+    let password = readLine()!
+    var MATRIX:[[String]] = [[]]
     
-    public init(){
-        print("init")
+    for _ in 0...6 {
+        let s = readLine()!
+       MATRIX.append(s.components(separatedBy: ","))
         
-        let userName = readLine()!
-        let password = readLine()!
-        self.userName = userName
-        self.password = password
-        
-        for _ in 0...6 {
-            let s = readLine()!
-            self.MATRIX.append(s.components(separatedBy: ","))
-            
-        }
     }
+    
+    return Account(MATRIX: MATRIX, userName: userName, password: password)
 }
