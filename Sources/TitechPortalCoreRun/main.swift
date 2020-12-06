@@ -8,9 +8,17 @@
 import Foundation
 import TitechPortalCore
 
-let s = makeAccount()
+let userName = readLine()!
+let password = readLine()!
+var matrix:[[String]] = [[]]
 
-TitechPortalLoginScrapingTask.login(userName: s.userName, password: s.password, matrix: s.MATRIX) {result in
+for _ in 0...6 {
+    let s = readLine()!
+    matrix.append(s.components(separatedBy: ","))
+    
+}
+
+TitechPortalLoginScrapingTask.login(userName: userName, password: password, matrix: matrix) {result in
     switch result {
     case .success(let cookies):
         print(cookies)
